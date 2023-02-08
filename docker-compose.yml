@@ -1,15 +1,36 @@
 version: "3.9"
 
 networks:
-  blog-net:
+  blog-app-test-net:
+    name: blog-app-test-net
     driver: bridge
 
 volumes:
   db_data: {}
 
 services:
+  mariadb:
+    container_name: mariadb
+    build:
+      context: ./mariadb
+      dockerfile: Dockerfile
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./mariadb/config:/etc/mysql/conf.d
+      - ./mariadb/scripts:/docker-entrypoint-initdb.d/
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - "3306:3308"
+    networks:
+      - blog-app-test-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "-ppassword" ,"ping", "-h", "localhost"]
+      timeout: 5s
+      retries: 10
+  
   backend:
-    container_name: backend
+    container_name: backend    
     mem_limit: 512m
     mem_reservation: 64M
     cpus: 0.5
@@ -27,10 +48,10 @@ services:
       - DATABASE_PASSWORD=password
       - DATABASE_HOST=mariadb
       - DATABASE_PORT=3306
-      - GIN_MODE=debug
+      - GIN_MODE=release
       - GIN_JWT_SECRET=testsecretkey
     networks:
-      - blog-net
+      - blog-app-test-net
     healthcheck:
       test: ["CMD", "curl", "http://localhost:9494/health_check"]
       timeout: 5s
@@ -39,19 +60,4 @@ services:
       mariadb:
           condition: service_healthy
 
-  mariadb:
-    container_name: mariadb
-    image: mariadb:latest
-    volumes:
-      - db_data:/var/lib/mysql
-      - ./mariadb:/etc/mysql/conf.d
-    environment:
-      MYSQL_ROOT_PASSWORD: password
-    ports:
-      - "3306:3308"
-    networks:
-      - blog-net
-    healthcheck:
-      test: ["CMD", "mysqladmin", "-ppassword" ,"ping", "-h", "localhost"]
-      timeout: 5s
-      retries: 10
+
