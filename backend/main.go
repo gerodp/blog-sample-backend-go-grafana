@@ -10,6 +10,7 @@ import (
 	"github.com/gin-contrib/pprof"
 
 	"github.com/gerodp/simpleBlogApp/controller"
+	"github.com/gerodp/simpleBlogApp/model"
 	"github.com/gerodp/simpleBlogApp/repository"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
@@ -22,6 +23,27 @@ func buildHandler(promRespTimeDuration *prometheus.HistogramVec, method string, 
 		handler(c)
 		duration := time.Since(start).Seconds()
 		promRespTimeDuration.With(prometheus.Labels{"method": method, "path": path}).Observe(duration)
+	}
+}
+
+func createTestUser(userRepo model.UserRepository) error {
+
+	_, err := userRepo.FindByUsername("testint1")
+
+	if err == nil {
+		return nil
+	} else {
+		user := model.User{
+			ID:        1,
+			Username:  "testint1",
+			Password:  "$2a$14$oemuupbL/xOA3d.jS3CBOeLf0SfCt.cWrqWBqr4jC71CxuF.mrrCa",
+			Email:     "test@integration.int",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+
+		_, err2 := userRepo.Save(&user)
+		return err2
 	}
 }
 
@@ -50,6 +72,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	errUser := createTestUser(repo.Users)
+
+	if errUser != nil {
+		log.Fatalln("Error creating test user", err)
+		os.Exit(1)
+	}
+
 	userCon := controller.NewUserController(repo.Users)
 
 	postCon := controller.NewPostController(repo.Posts)
@@ -75,7 +104,7 @@ func main() {
 	r.POST("/login", buildHandler(promRespTimeDuration, "POST", "/login", authMdw.LoginHandler))
 
 	auth := r.Group("/auth")
-	// Refresh time can be longer than token timeout
+
 	r.POST("/refresh_token", buildHandler(promRespTimeDuration, "POST", "/refresh_token", authMdw.RefreshHandler))
 
 	auth.Use(authMdw.MiddlewareFunc())
@@ -95,15 +124,10 @@ func main() {
 		c.JSON(404, gin.H{"message": "Endpoint not found"})
 	})
 
-	//r.Run(os.Getenv("BACKEND_ADDRESS"))
-
 	s := &http.Server{
 		Addr:     os.Getenv("BACKEND_ADDRESS"),
 		Handler:  r,
 		ErrorLog: log.Default(),
-		//ReadTimeout:    10 * time.Second,
-		//WriteTimeout:   10 * time.Second,
-		//MaxHeaderBytes: 1 << 20,
 	}
 	s.ListenAndServe()
 }
