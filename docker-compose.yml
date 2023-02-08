@@ -7,10 +7,11 @@ networks:
 
 volumes:
   db_data: {}
+  prometheus_data: {}
+  grafana_data: {}
 
 services:
   mariadb:
-    container_name: mariadb
     build:
       context: ./mariadb
       dockerfile: Dockerfile
@@ -29,8 +30,7 @@ services:
       timeout: 5s
       retries: 10
   
-  backend:
-    container_name: backend    
+  backend:   
     mem_limit: 512m
     mem_reservation: 64M
     cpus: 0.5
@@ -56,6 +56,61 @@ services:
       test: ["CMD", "curl", "http://localhost:9494/health_check"]
       timeout: 5s
       retries: 10
+    depends_on:
+      mariadb:
+          condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:v2.40.7
+    command:
+      - --web.enable-remote-write-receiver
+      - --enable-feature=native-histograms
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - blog-app-test-net
+    depends_on:
+      - cadvisor
+
+  grafana:
+    image: grafana/grafana:9.3.2
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_BASIC_ENABLED=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana:/etc/grafana/provisioning/
+    networks:
+      - blog-app-test-net
+    depends_on:
+      - prometheus
+  
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.0
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /dev/disk/:/dev/disk:ro
+
+      #- /cgroup:/cgroup:ro #doesn't work on MacOS only for Linux
+    restart: unless-stopped
+    expose:
+      - 8080
+    networks:
+      - blog-app-test-net
     depends_on:
       mariadb:
           condition: service_healthy

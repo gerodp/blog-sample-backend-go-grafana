@@ -11,6 +11,18 @@ To launch the containers run the following command:
 make start
 ```
 
+The following services will be started:
+
+- backend: The backend in Go that implement the Blog API
+- mariadb: MariaDB Database Server
+- cadvisor: Collects different container usage metrics
+- prometheus: Monitoring backend that will collect the metrics from backend
+- grafana: Monitoring frontend with dashboards to check different metrics
+
+To access Grafana open a browser and navigate to http://localhost:3000
+
+To access Prometheus open a browser and navigate to http://localhost:9090
+
 
 ## Deployment in AWS EC2
 
