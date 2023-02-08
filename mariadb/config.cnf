@@ -1,0 +1,11 @@
+#[mariadb]
+#performance_schema=ON
+#performance-schema-instrument='statement/%=ON'
+#performance-schema-consumer-statements-digest=ON
+#performance-schema-consumer-events-statements-current=ON
+#performance-schema-consumer-events-statements-history=ON
+#performance-schema-consumer-events-waits-current=ON
+#performance-schema-consumer-events-waits-history=ON
+#performance-schema-consumer-thread-instrumentation=ON
+#innodb_monitor_enable=all
+#query_response_time_stats=ON

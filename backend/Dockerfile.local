@@ -1,0 +1,15 @@
+FROM golang:latest
+
+# Set the working directory
+WORKDIR /app
+
+RUN go install github.com/githubnemo/CompileDaemon@v1.4.0
+
+COPY . .
+
+RUN go get -d -v ./...
+
+# Expose the port on which the server listens
+EXPOSE 9494
+
+ENTRYPOINT CompileDaemon -polling --build="go build -o server ." --command=./server

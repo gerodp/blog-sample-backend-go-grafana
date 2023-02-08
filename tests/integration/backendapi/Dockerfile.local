@@ -1,0 +1,12 @@
+FROM golang:latest
+
+# Set the working directory
+WORKDIR /app
+
+RUN go install github.com/githubnemo/CompileDaemon@v1.4.0
+
+COPY . .
+
+RUN go get -d -v ./...
+
+ENTRYPOINT CompileDaemon -build="true" -command="go test ." -polling 
