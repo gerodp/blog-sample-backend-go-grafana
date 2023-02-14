@@ -11,8 +11,7 @@ import (
 const postEndpointUrl string = "/auth/post"
 
 func TestListPosts(t *testing.T) {
-
-	t.Run("without  login should failed as unauthorized", func(t *testing.T) {
+	t.Run("without login should failed as unauthorized", func(t *testing.T) {
 		e := HelperBuildHttpexpect(t)
 
 		e.GET(postEndpointUrl).
@@ -32,7 +31,7 @@ func TestListPosts(t *testing.T) {
 			Status(http.StatusOK).JSON().Array().NotEmpty()
 	})
 
-	t.Run("with author_id  and login should succeed", func(t *testing.T) {
+	t.Run("with author_id and login should succeed", func(t *testing.T) {
 		e := HelperBuildHttpexpect(t)
 
 		jwt := HelperLogin(e)
@@ -103,7 +102,6 @@ func TestListPosts(t *testing.T) {
 }
 
 func TestCreatePost(t *testing.T) {
-
 	t.Run("with login should succeed", func(t *testing.T) {
 		e := HelperBuildHttpexpect(t)
 
@@ -125,7 +123,6 @@ func TestCreatePost(t *testing.T) {
 }
 
 func TestDeletePost(t *testing.T) {
-
 	t.Run("with login should succeed", func(t *testing.T) {
 		e := HelperBuildHttpexpect(t)
 

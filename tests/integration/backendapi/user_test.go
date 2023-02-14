@@ -9,7 +9,6 @@ import (
 const userEndpointUrl string = "/auth/user"
 
 func TestListUsers(t *testing.T) {
-
 	t.Run("without login should failed as unauthorized", func(t *testing.T) {
 		e := HelperBuildHttpexpect(t)
 
